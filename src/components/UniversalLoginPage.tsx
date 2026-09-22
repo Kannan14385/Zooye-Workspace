@@ -661,7 +661,7 @@ export const UniversalLoginPage: React.FC<UniversalLoginPageProps> = ({
       {/* Footer Info */}
       <footer className="max-w-4xl w-full mx-auto text-center text-xs text-stone-500 py-2 border-t border-stone-800/80 flex flex-col sm:flex-row items-center justify-between gap-2">
         <span>Zooye Info Technologies • WordPress Delivery Workspace</span>
-        <span>Default credentials: CEO (`ceo123`), HR (`hr123`), Employee (`emp123`)</span>
+        <span>Protected internal access for authorized Zooye team members</span>
       </footer>
     </div>
   );
