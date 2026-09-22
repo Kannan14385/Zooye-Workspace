@@ -1,0 +1,6 @@
+{
+  "name": "Notion Office Workspace",
+  "description": "Enterprise workspace with role-based authentication, personalized dashboards for CEO and HR featuring Recharts workload analytics, real-time email assignment alerts, an Inbox section, and Thozha - the Gemini-powered AI workspace copilot.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

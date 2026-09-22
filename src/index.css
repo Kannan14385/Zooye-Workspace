@@ -1,0 +1,281 @@
+@import "tailwindcss";
+
+.form-input {
+	width: 100%;
+	border: 1px solid #cbd5e1;
+	border-radius: 0.75rem;
+	background: #ffffff;
+	padding: 0.7rem 0.85rem;
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	color: #1e293b;
+	outline: none;
+	transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.form-input::placeholder {
+	color: #94a3b8;
+}
+
+.form-input:focus {
+	border-color: #2563eb;
+	box-shadow: 0 0 0 3px rgb(37 99 235 / 0.14);
+}
+
+.theme-dark .form-input {
+	border-color: #57534e;
+	background: #1c1917;
+	color: #f5f5f4;
+}
+
+.theme-dark .form-input::placeholder {
+	color: #a8a29e;
+}
+
+.theme-dark .form-input:focus {
+	border-color: #60a5fa;
+	box-shadow: 0 0 0 3px rgb(96 165 250 / 0.18);
+}
+
+:root {
+	color-scheme: light;
+}
+
+/* Shared theme compatibility for the existing utility-heavy workspace UI. */
+.theme-light {
+	color-scheme: light;
+}
+
+.theme-light.bg-stone-950 {
+	background: #f4f7fb !important;
+	color: #292524 !important;
+}
+
+.theme-light.bg-stone-950 .bg-stone-900 {
+	background: #ffffff !important;
+	border-color: #e7e5e4 !important;
+	box-shadow: 0 20px 50px rgba(30, 41, 59, 0.08) !important;
+}
+
+.theme-light.bg-stone-950 .bg-stone-800,
+.theme-light.bg-stone-950 .bg-stone-700 {
+	background: #eef2ff !important;
+	border-color: #c7d2fe !important;
+	color: #1e293b !important;
+}
+
+.theme-light.bg-stone-950 .bg-stone-950\/70,
+.theme-light.bg-stone-950 .hover\:bg-stone-800\/50:hover {
+	background: #ffffff !important;
+	border-color: #dbe3ef !important;
+	color: #334155 !important;
+}
+
+.theme-light.bg-stone-950 .from-stone-800,
+.theme-light.bg-stone-950 .to-stone-900 {
+	--tw-gradient-from: #ffffff var(--tw-gradient-from-position) !important;
+	--tw-gradient-to: rgb(255 255 255 / 0) var(--tw-gradient-to-position) !important;
+}
+
+.theme-light.bg-stone-950 .bg-stone-950,
+.theme-light.bg-stone-950 input,
+.theme-light.bg-stone-950 select {
+	background: #fafaf9 !important;
+	color: #292524 !important;
+	border-color: #d6d3d1 !important;
+}
+
+.theme-light.bg-stone-950 .text-white,
+.theme-light.bg-stone-950 .text-stone-100,
+.theme-light.bg-stone-950 .text-stone-200,
+.theme-light.bg-stone-950 .text-stone-300 {
+	color: #292524 !important;
+}
+
+.theme-light.bg-stone-950 .text-stone-400,
+.theme-light.bg-stone-950 .text-stone-500 {
+	color: #78716c !important;
+}
+
+.theme-light.bg-stone-950 .placeholder-stone-500::placeholder {
+	color: #94a3b8 !important;
+}
+
+.theme-light.bg-stone-950 .border-stone-800,
+.theme-light.bg-stone-950 .border-stone-700 {
+	border-color: #e7e5e4 !important;
+}
+
+.theme-light.bg-stone-950 .bg-amber-400 {
+	background: #2563eb !important;
+	color: #ffffff !important;
+}
+
+.theme-light.bg-stone-950 .text-amber-400 {
+	color: #1d4ed8 !important;
+}
+
+.theme-light.bg-stone-950 .text-amber-300,
+.theme-light.bg-stone-950 .text-amber-200,
+.theme-light.bg-stone-950 .text-amber-300\/80,
+.theme-light.bg-stone-950 .text-amber-400\/90 {
+	color: #1d4ed8 !important;
+}
+
+.theme-light.bg-stone-950 .bg-rose-950\/70 {
+	background: #fff1f2 !important;
+	border-color: #fecdd3 !important;
+	color: #9f1239 !important;
+}
+
+.theme-light.bg-stone-950 .bg-emerald-950\/70 {
+	background: #ecfdf5 !important;
+	border-color: #a7f3d0 !important;
+	color: #047857 !important;
+}
+
+.theme-dark {
+	color-scheme: dark;
+}
+
+.theme-dark.bg-\[\#f5f5f3\] {
+	background: #171513 !important;
+	color: #f5f5f4 !important;
+}
+
+.theme-light.bg-\[\#f5f5f3\] {
+	background: #f4f7fb !important;
+}
+
+.theme-light.bg-\[\#f5f5f3\] header {
+	background: rgba(255, 255, 255, 0.96) !important;
+	border-color: #e2e8f0 !important;
+}
+
+.theme-dark.bg-\[\#f5f5f3\] header {
+	background: rgba(28, 25, 23, 0.96) !important;
+	border-color: #44403c !important;
+}
+
+.theme-dark.bg-\[\#f5f5f3\] .bg-white,
+.theme-dark.bg-\[\#f5f5f3\] .bg-stone-50,
+.theme-dark.bg-\[\#f5f5f3\] .bg-stone-100 {
+	background: #292524 !important;
+	color: #f5f5f4 !important;
+	border-color: #44403c !important;
+}
+
+.theme-dark.bg-\[\#f5f5f3\] .bg-stone-900,
+.theme-dark.bg-\[\#f5f5f3\] .bg-stone-800,
+.theme-dark.bg-\[\#f5f5f3\] .bg-stone-700 {
+	background: #292524 !important;
+	color: #f5f5f4 !important;
+	border-color: #57534e !important;
+}
+
+.theme-dark.bg-\[\#f5f5f3\] .text-stone-900,
+.theme-dark.bg-\[\#f5f5f3\] .text-stone-800,
+.theme-dark.bg-\[\#f5f5f3\] .text-stone-700 {
+	color: #f5f5f4 !important;
+}
+
+.theme-dark.bg-\[\#f5f5f3\] .text-stone-600,
+.theme-dark.bg-\[\#f5f5f3\] .text-stone-500 {
+	color: #d6d3d1 !important;
+}
+
+.theme-dark.bg-\[\#f5f5f3\] .border-stone-200,
+.theme-dark.bg-\[\#f5f5f3\] .border-stone-100 {
+	border-color: #44403c !important;
+}
+
+.theme-dark.bg-\[\#f5f5f3\] input,
+.theme-dark.bg-\[\#f5f5f3\] select {
+	background: #1c1917 !important;
+	color: #f5f5f4 !important;
+	border-color: #57534e !important;
+}
+
+/* Thozha keeps its own readable chat palette in either workspace theme. */
+.theme-light .thozha-modal {
+	background: #ffffff !important;
+	border-color: #dbe3ef !important;
+	color: #1e293b !important;
+}
+
+.theme-light .thozha-modal > header,
+.theme-light .thozha-modal > form,
+.theme-light .thozha-modal > .bg-stone-950,
+.theme-light .thozha-modal > div.bg-stone-950 {
+	background: #f8fafc !important;
+	border-color: #e2e8f0 !important;
+}
+
+.theme-light .thozha-modal .text-white,
+.theme-light .thozha-modal .text-stone-100,
+.theme-light .thozha-modal .text-stone-200,
+.theme-light .thozha-modal .text-stone-300 {
+	color: #1e293b !important;
+}
+
+.theme-light .thozha-modal .text-stone-400,
+.theme-light .thozha-modal .text-stone-500 {
+	color: #64748b !important;
+}
+
+.theme-light .thozha-modal .bg-stone-800\/90 {
+	background: #f1f5f9 !important;
+	border-color: #dbe3ef !important;
+	color: #334155 !important;
+}
+
+.theme-light .thozha-modal .bg-stone-900 {
+	background: #ffffff !important;
+	border-color: #dbe3ef !important;
+}
+
+.theme-light .thozha-modal input {
+	background: #ffffff !important;
+	border-color: #cbd5e1 !important;
+	color: #1e293b !important;
+}
+
+.theme-light .thozha-modal input::placeholder {
+	color: #94a3b8 !important;
+}
+
+.theme-light .thozha-modal button.bg-stone-900 {
+	background: #ffffff !important;
+	color: #334155 !important;
+	border-color: #dbe3ef !important;
+}
+
+.theme-light .thozha-modal button.hover\:bg-stone-800:hover {
+	background: #e2e8f0 !important;
+}
+
+.theme-dark .thozha-modal {
+	background: #1c1917 !important;
+	border-color: #57534e !important;
+	color: #f5f5f4 !important;
+}
+
+.theme-dark .thozha-modal > header,
+.theme-dark .thozha-modal > form,
+.theme-dark .thozha-modal > .bg-stone-950,
+.theme-dark .thozha-modal > div.bg-stone-950 {
+	background: #0c0a09 !important;
+	border-color: #44403c !important;
+}
+
+.theme-dark .thozha-modal .bg-stone-800\/90 {
+	background: #292524 !important;
+	border-color: #57534e !important;
+	color: #f5f5f4 !important;
+}
+
+.theme-dark .thozha-modal input {
+	background: #292524 !important;
+	border-color: #57534e !important;
+	color: #f5f5f4 !important;
+}
