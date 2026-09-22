@@ -5,11 +5,13 @@ import { GoogleGenAI } from '@google/genai';
 import { createServer as createViteServer } from 'vite';
 import sqlite3 from 'sqlite3';
 import { mkdirSync } from 'fs';
+import nodemailer from 'nodemailer';
 
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
+const allowedOrigin = process.env.FRONTEND_ORIGIN || 'https://kannan14385.github.io';
 const DB_DIR = path.join(process.cwd(), 'data');
 const DB_PATH = path.join(DB_DIR, 'notion.sqlite');
 
@@ -112,6 +114,55 @@ async function bootstrapDatabase() {
 
 bootstrapDatabase().catch((error) => {
   console.error('Database bootstrap failed:', error);
+});
+
+// =========================================================================
+// SMTP TRANSPORTER – Gmail App Password
+// =========================================================================
+let smtpTransporter: ReturnType<typeof nodemailer.createTransport> | null = null;
+
+function getSmtpTransporter() {
+  if (smtpTransporter) return smtpTransporter;
+
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+
+  if (!user || !pass) {
+    console.warn('[SMTP] SMTP_USER or SMTP_PASS not set – emails will be simulated only.');
+    return null;
+  }
+
+  smtpTransporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: Number(process.env.SMTP_PORT) || 465,
+    secure: process.env.SMTP_SECURE !== 'false', // true for port 465
+    auth: { user, pass },
+  });
+
+  // Verify connection asynchronously so startup is not blocked
+  smtpTransporter.verify().then(() => {
+    console.log(`[SMTP] Transporter ready – connected as ${user}`);
+  }).catch((err: Error) => {
+    console.error('[SMTP] Transporter verify failed:', err.message);
+    smtpTransporter = null; // reset so next request retries
+  });
+
+  return smtpTransporter;
+}
+
+app.use((req, res, next) => {
+  const requestOrigin = req.headers.origin;
+  if (requestOrigin === allowedOrigin) {
+    res.setHeader('Access-Control-Allow-Origin', requestOrigin);
+    res.setHeader('Vary', 'Origin');
+  }
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(204);
+    return;
+  }
+  next();
 });
 
 app.use(express.json());
@@ -333,7 +384,7 @@ Tone & Style:
 // =========================================================================
 // 2. REAL-TIME EMAIL DISPATCH & NOTIFICATION API
 // =========================================================================
-app.post('/api/email/notify', (req, res) => {
+app.post('/api/email/notify', async (req, res) => {
   try {
     const {
       toEmail,
@@ -347,14 +398,85 @@ app.post('/api/email/notify', (req, res) => {
       body,
     } = req.body;
 
+    if (!toEmail || !subject) {
+      res.status(400).json({ error: 'toEmail and subject are required.' });
+      return;
+    }
+
     const emailId = 'email-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
     const timestamp = new Date().toISOString();
+    const fromAddress = process.env.SMTP_USER || 'no-reply@zooye.in';
+    const fromLabel = process.env.SMTP_FROM_NAME || 'Zooye Workspace';
 
-    console.log(`[REAL-TIME EMAIL DISPATCHED] To: ${toEmail} | From: ${fromName} (${fromRole}) | Subject: ${subject}`);
+    // Build a clean HTML email body
+    const htmlBody = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${subject}</title></head>
+<body style="margin:0;padding:0;background:#f4f7fb;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7fb;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
+        <tr><td style="background:#1c1917;padding:24px 32px;">
+          <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#f59e0b;">Zooye Info Technologies</p>
+          <h1 style="margin:6px 0 0;font-size:20px;font-weight:800;color:#ffffff;">WordPress Delivery Workspace</h1>
+        </td></tr>
+        <tr><td style="padding:32px;">
+          <p style="margin:0 0 8px;font-size:13px;color:#64748b;">Hi <strong>${toName}</strong>,</p>
+          <div style="white-space:pre-wrap;font-size:14px;color:#1e293b;line-height:1.7;">${body}</div>
+          ${taskTitle ? `
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
+            <tr><td style="padding:16px;">
+              <p style="margin:0 0 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#94a3b8;">Task Details</p>
+              <p style="margin:0;font-size:14px;font-weight:700;color:#0f172a;">📋 ${taskTitle}</p>
+              ${priority ? `<p style="margin:4px 0 0;font-size:12px;color:#64748b;">Priority: <strong style="color:#dc2626;">${priority}</strong></p>` : ''}
+              ${dueDate ? `<p style="margin:4px 0 0;font-size:12px;color:#64748b;">Due: <strong>${dueDate}</strong></p>` : ''}
+            </td></tr>
+          </table>` : ''}
+          <p style="margin:24px 0 0;font-size:12px;color:#94a3b8;">This email was sent by <strong>${fromName}</strong> (${fromRole}) from the Zooye Workspace platform.</p>
+        </td></tr>
+        <tr><td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:16px 32px;">
+          <p style="margin:0;font-size:11px;color:#94a3b8;">© ${new Date().getFullYear()} Zooye Info Technologies · WordPress Delivery Workspace · Protected internal access</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+    const transporter = getSmtpTransporter();
+    let smtpMessageId: string | undefined;
+
+    if (!transporter) {
+      res.status(503).json({ error: 'SMTP is not configured. Set SMTP_USER and SMTP_PASS on the server.' });
+      return;
+    }
+
+    try {
+      const info = await transporter.sendMail({
+        from: `"${fromLabel}" <${fromAddress}>`,
+        to: `"${toName}" <${toEmail}>`,
+        subject,
+        text: body,
+        html: htmlBody,
+        replyTo: fromAddress,
+        headers: {
+          'X-Workspace-Email-Id': emailId,
+          'X-Sent-From': fromName,
+        },
+      });
+      smtpMessageId = info.messageId;
+      console.log(`[SMTP] Email sent to ${toEmail} | Message-Id: ${smtpMessageId}`);
+    } catch (smtpErr: any) {
+      console.error(`[SMTP] Send failed: ${smtpErr.message}`);
+      res.status(502).json({ error: smtpErr?.message || 'SMTP rejected the email.' });
+      return;
+    }
 
     res.json({
       success: true,
-      messageId: emailId,
+      messageId: smtpMessageId || emailId,
       timestamp,
       recipient: { email: toEmail, name: toName },
       sender: { name: fromName, role: fromRole },
@@ -362,6 +484,7 @@ app.post('/api/email/notify', (req, res) => {
       deliveryStatus: 'delivered',
     });
   } catch (error: any) {
+    console.error('[Email API] Unexpected error:', error);
     res.status(500).json({ error: error?.message || 'Failed to dispatch email' });
   }
 });

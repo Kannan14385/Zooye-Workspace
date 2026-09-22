@@ -64,6 +64,7 @@ Copy `.env.example` to `.env` and configure the optional Gemini API key. SMTP se
 
 ```env
 GEMINI_API_KEY=your_gemini_api_key
+VITE_API_URL=http://localhost:3000
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-company-email@example.com
@@ -72,6 +73,8 @@ SMTP_FROM=your-company-email@example.com
 ```
 
 Never commit `.env`, API keys, SMTP passwords, or other credentials.
+
+When the frontend is deployed separately, set `VITE_API_URL` to the public URL of the Express server. GitHub Pages can host the frontend, but it cannot run the SMTP backend itself.
 
 ### Start the development server
 

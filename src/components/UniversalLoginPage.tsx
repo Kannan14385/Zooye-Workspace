@@ -245,7 +245,7 @@ export const UniversalLoginPage: React.FC<UniversalLoginPageProps> = ({
     setRegSuccess('Your application was submitted. The admin must approve it before your account can sign in.');
   };
 
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
     const normalizedEmail = regEmail.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       setRegError('Enter a valid email address before requesting an OTP.');
@@ -256,10 +256,37 @@ export const UniversalLoginPage: React.FC<UniversalLoginPageProps> = ({
       return;
     }
     const nextOtp = String(Math.floor(100000 + Math.random() * 900000));
-    setGeneratedOtp(nextOtp);
-    setOtpSent(true);
-    setEmailVerified(false);
-    setRegError(`OTP sent to ${normalizedEmail}. Demo OTP: ${nextOtp}`);
+    const apiUrl = `${((import.meta.env.VITE_API_URL as string | undefined) || '').replace(/\/$/, '')}/api/email/notify`;
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          toEmail: normalizedEmail,
+          toName: regName.trim() || 'Workspace user',
+          fromName: 'Zooye Workspace',
+          fromRole: 'system',
+          subject: 'Your Zooye Workspace registration verification code',
+          body: `Your Zooye Workspace verification code is: ${nextOtp}\n\nThis code expires when you request a new one. If you did not request registration, you can ignore this email.`,
+        }),
+      });
+
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({}));
+        throw new Error(result.error || `Email API returned HTTP ${response.status}`);
+      }
+
+      setGeneratedOtp(nextOtp);
+      setOtpSent(true);
+      setEmailVerified(false);
+      setRegError(null);
+      setRegSuccess(`A verification code was sent to ${normalizedEmail}.`);
+    } catch (error: any) {
+      setOtpSent(false);
+      setEmailVerified(false);
+      setRegError(error?.message || 'The verification email could not be sent.');
+    }
   };
 
   const handleVerifyOtp = () => {

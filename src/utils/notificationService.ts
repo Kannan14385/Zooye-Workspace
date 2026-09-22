@@ -3,6 +3,11 @@ import { InboxNotification, EmailDispatchLog, WorkspaceUser, KanbanTask } from '
 const NOTIFICATIONS_STORAGE_KEY = 'notion_inbox_notifications_v2';
 const EMAIL_LOGS_STORAGE_KEY = 'notion_email_logs_v2';
 
+function getEmailApiUrl(): string {
+  const configuredApiUrl = import.meta.env.VITE_API_URL as string | undefined;
+  return `${(configuredApiUrl || '').replace(/\/$/, '')}/api/email/notify`;
+}
+
 export const INITIAL_NOTIFICATIONS: InboxNotification[] = [
   {
     id: 'notif-1',
@@ -233,8 +238,9 @@ Zooye Info Technologies WordPress Delivery Workspace
 Access Link: /workspace/task/${task.id}`;
 
   // 1. Send to server backend
+  let emailDelivered = false;
   try {
-    fetch('/api/email/notify', {
+    const response = await fetch(getEmailApiUrl(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -248,9 +254,14 @@ Access Link: /workspace/task/${task.id}`;
         subject,
         body: emailBody,
       }),
-    }).catch((e) => console.warn('Server email dispatch notice:', e));
+    });
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      throw new Error(result.error || `Email API returned HTTP ${response.status}`);
+    }
+    emailDelivered = true;
   } catch (e) {
-    // Non-blocking
+    console.warn('Server email dispatch failed:', e);
   }
 
   // 2. Create notification record
@@ -271,7 +282,7 @@ Access Link: /workspace/task/${task.id}`;
     priority: task.priority,
     isRead: false,
     createdAt: new Date().toISOString(),
-    emailSent: true,
+    emailSent: emailDelivered,
     emailSubject: subject,
     emailBody,
   };
@@ -290,7 +301,7 @@ Access Link: /workspace/task/${task.id}`;
     taskTitle: task.title,
     priority: task.priority || 'Normal',
     dueDate: task.dueDate,
-    status: 'delivered',
+    status: emailDelivered ? 'delivered' : 'simulated_live',
   };
 
   // 4. Update localStorage
@@ -329,7 +340,7 @@ export async function dispatchTaskStatusUpdate(
   const supervisors = recipients.filter((recipient) => recipient.role === 'admin');
   const message = `${employee.name} updated "${task.title}" to ${task.status}.${task.note ? ` Note: ${task.note}` : ''}`;
 
-  supervisors.forEach((recipient) => {
+  await Promise.all(supervisors.map(async (recipient) => {
     const notification: InboxNotification = {
       id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       recipientId: recipient.id,
@@ -346,10 +357,36 @@ export async function dispatchTaskStatusUpdate(
       priority: 'Normal',
       isRead: false,
       createdAt: new Date().toISOString(),
-      emailSent: true,
+      emailSent: false,
       emailSubject: `[Work Update] ${employee.name} updated ${task.title}`,
       emailBody: `Hello ${recipient.name},\n\n${message}\n\nZooye Info Technologies Workspace`,
     };
+
+    let emailDelivered = false;
+    try {
+      const response = await fetch(getEmailApiUrl(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          toEmail: recipient.email,
+          toName: recipient.name,
+          fromName: employee.name,
+          fromRole: employee.role,
+          taskTitle: task.title,
+          subject: `[Work Update] ${employee.name} updated ${task.title}`,
+          body: `Hello ${recipient.name},\n\n${message}\n\nZooye Info Technologies Workspace`,
+        }),
+      });
+      emailDelivered = response.ok;
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({}));
+        console.warn('Server status email dispatch failed:', result.error || response.statusText);
+      }
+    } catch (error) {
+      console.warn('Server status email dispatch failed:', error);
+    }
+
+    notification.emailSent = emailDelivered;
 
     const emailLog: EmailDispatchLog = {
       id: `elog-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -362,22 +399,8 @@ export async function dispatchTaskStatusUpdate(
       timestamp: notification.createdAt,
       taskId: task.id,
       taskTitle: task.title,
-      status: 'simulated_live',
+      status: emailDelivered ? 'delivered' : 'simulated_live',
     };
-
-    fetch('/api/email/notify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        toEmail: recipient.email,
-        toName: recipient.name,
-        fromName: employee.name,
-        fromRole: employee.role,
-        taskTitle: task.title,
-        subject: emailLog.subject,
-        body: emailLog.body,
-      }),
-    }).catch((error) => console.warn('Server status email notice:', error));
 
     saveStoredNotifications([notification, ...getStoredNotifications()]);
     saveStoredEmailLogs([emailLog, ...getStoredEmailLogs()]);
@@ -392,5 +415,5 @@ export async function dispatchTaskStatusUpdate(
         },
       })
     );
-  });
+  }));
 }
